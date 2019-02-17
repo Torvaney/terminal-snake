@@ -1,17 +1,21 @@
 module Main where
 
-import Control.Concurrent (threadDelay)
+import qualified Control.Concurrent as CC
 import qualified Control.Monad as M
 import qualified System.Console.ANSI as Ansi
-import qualified System.IO as SysIO
+import Control.Exception (bracket)
+import System.IO
+
+import Pipes
+import Pipes.Concurrent
+import qualified Pipes.Prelude as P
 
 import Lib
 import Board
 import Snake
 
 
-delayMilliseconds ms = threadDelay (ms * 1000)
-
+-- INIT GAME
 
 initSnake :: Snake
 initSnake = Snake
@@ -25,10 +29,13 @@ initState :: State
 initState = State
     { snake  = initSnake
     , rows   = 20
-    , cols   = 20
+    , cols   = 50
     , status = KeepPlaying
+    , apple  = (3, 2)
     }
 
+
+-- RENDERING
 
 clearBoard :: State -> IO ()
 clearBoard state =
@@ -38,34 +45,64 @@ clearBoard state =
         Ansi.setCursorColumn 0)
 
 
-ifReadyDo :: SysIO.Handle -> IO a -> IO (Maybe a)
-ifReadyDo hnd x = SysIO.hReady hnd >>= f
-    where f True = Just <$> x
-          f _    = return Nothing
+-- USER INPUT
+
+delayMilliseconds ms = CC.threadDelay (ms * 1000)
 
 
-getUserInput :: IO a -> IO (Maybe a)
-getUserInput _ = return Nothing
+parseDirection :: Char -> Maybe Turn
+parseDirection c = case c of
+    's' -> Just LeftTurn
+    'd' -> Just RightTurn
+    _   -> Nothing
 
 
-applyUserInput (Just _) state = state {snake = turn RightTurn (snake state)}
-applyUserInput Nothing  state = state
+getCharImmediately :: IO Char
+getCharImmediately = do
+    hSetBuffering stdin NoBuffering
+    getChar
 
 
-gameLoop :: State -> IO ()
-gameLoop state@State{status = GameOver} = do
-    putStr $ drawBoard $ createBoard state
-    putStrLn "\n\nGame Over!"
-gameLoop state@State{status = _} = do
-    putStr $ drawBoard $ createBoard state
-    SysIO.hFlush SysIO.stdout
-    delayMilliseconds 250
-    clearBoard state
-    p <- getUserInput getChar
-    gameLoop $ next (applyUserInput p state)
+getDirections :: Producer (Maybe Turn) IO ()
+getDirections = M.forever $ do
+    c <- lift getCharImmediately
+    yield $ parseDirection c
+
+
+ticktock :: Producer (Maybe Turn) IO ()
+ticktock = M.forever $ do
+    lift $ delayMilliseconds 250
+    yield Nothing
+
+
+applyUserAction :: State -> Maybe Turn -> State
+applyUserAction state event =
+    case event of
+        Just thatWay -> Lib.next $ state {snake = turn thatWay (snake state)}
+        Nothing      -> Lib.next state
+
+
+consumeUserActions :: State -> Consumer (Maybe Turn) IO ()
+consumeUserActions state = do
+    event <- await
+    let newState = applyUserAction state event
+    lift $ clearBoard newState
+    lift $ putStr $ drawBoard $ createBoard newState
+    lift $ hFlush stdout
+    let nextState = Lib.next newState
+    case status state of
+        GameOver -> lift $ putStrLn "\n\nGame Over!\n"
+        _        -> consumeUserActions nextState
 
 
 main :: IO ()
 main = do
-    Ansi.hideCursor
-    gameLoop initState
+    putStrLn $ drawBoard $ createBoard initState
+    (output, input) <- spawn unbounded
+
+    forkIO $ do runEffect $ ticktock >-> toOutput output
+                performGC
+    forkIO $ do runEffect $ getDirections >-> toOutput output
+                performGC
+
+    runEffect $ fromInput input >-> consumeUserActions initState

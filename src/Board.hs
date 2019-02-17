@@ -17,6 +17,7 @@ import Snake
 data Square
     = SnakeHead Direction
     | SnakeBody
+    | Apple
     | Empty
     deriving Show
 
@@ -27,6 +28,7 @@ squareChar (SnakeHead East)  = '>'
 squareChar (SnakeHead South) = 'V'
 squareChar (SnakeHead West)  = '<'
 squareChar SnakeBody         = '#'
+squareChar Apple             = '@'
 squareChar Empty             = '•'
 
 
@@ -55,12 +57,14 @@ updateBoard square (x, y) board =
 
 createBoard :: State -> Board
 createBoard state =
+    updateBoard Apple appleCoord $
     updateBoard (SnakeHead headDirection) headCoord $
     foldl (flip (updateBoard SnakeBody)) initBoard bodyCoords
     where initBoard         = createEmptyBoard (cols state) (rows state)
           Body i bodyCoords = body (snake state)
           headDirection     = direction (snake state)
           headCoord         = coordinate (snake state)
+          appleCoord        = apple state
 
 
 drawBoard :: Board -> String

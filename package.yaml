@@ -36,6 +36,8 @@ executables:
     dependencies:
     - terminal-snake
     - ansi-terminal
+    - pipes
+    - pipes-concurrency
 
 tests:
   terminal-snake-test:

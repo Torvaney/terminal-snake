@@ -18,6 +18,7 @@ data State = State
     , rows   :: Int
     , cols   :: Int
     , status :: Status
+    , apple  :: Coordinate
     }
 
 
