@@ -46,5 +46,6 @@ checkState state =
     checkOuroboros $ checkLimits state
 
 
-next :: State -> State
-next state = checkState $ state { snake = slither (snake state) }
+next :: Maybe Action -> State -> State
+next (Just action) state = checkState $ state { snake = slither action (snake state) }
+next Nothing       state = state

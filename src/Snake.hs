@@ -6,8 +6,7 @@ module Snake
     , extend
     , Snake(..)
     , slither
-    , Turn(..)
-    , turn
+    , Action(..)
     ) where
 
 
@@ -21,7 +20,8 @@ data Direction
     deriving (Eq, Show)
 
 
--- Can I not just do this with typeclasses?
+-- There must be a better way to do this
+-- Can I do this with typeclasses?
 turnLeft :: Direction -> Direction
 turnLeft North = West
 turnLeft West  = South
@@ -40,19 +40,16 @@ turnRight East  = South
 type Coordinate = (Int, Int)
 
 
-move :: Direction -> Coordinate -> Coordinate
-move North (x, y) = (x, y - 1)
-move West  (x, y) = (x - 1, y)
-move South (x, y) = (x, y + 1)
-move East  (x, y) = (x + 1, y)
+slide :: Direction -> Coordinate -> Coordinate
+slide North (x, y) = (x, y - 1)
+slide West  (x, y) = (x - 1, y)
+slide South (x, y) = (x, y + 1)
+slide East  (x, y) = (x + 1, y)
 
 
 -- BODY
 
 data Body a = Body Int [a] deriving (Show)
-
--- instance Foldable Body where
---     foldr f z (Body i xs) = Body i (foldr f z xs)
 
 
 shift :: Body a -> a -> Body a
@@ -72,18 +69,17 @@ data Snake = Snake
     } deriving Show
 
 
-slither :: Snake -> Snake
-slither snake = snake { coordinate = move (direction snake) (coordinate snake)
-                      , body       = shift (body snake) (coordinate snake)
-                      }
-
-
-data Turn
-    = LeftTurn
-    | RightTurn
+data Action
+    = Leftward
+    | Rightward
+    | Forward
     deriving (Eq, Show)
 
 
-turn :: Turn -> Snake -> Snake
-turn LeftTurn  snake = snake {direction = turnLeft  (direction snake)}
-turn RightTurn snake = snake {direction = turnRight (direction snake)}
+slither :: Action -> Snake -> Snake
+slither Forward snake = snake { coordinate = slide (direction snake) (coordinate snake)
+                              , body       = shift (body snake) (coordinate snake)
+                              }
+slither Leftward  snake = snake { direction  = turnLeft  (direction snake) }
+slither Rightward snake = snake { direction  = turnRight (direction snake) }
+

@@ -50,10 +50,10 @@ clearBoard state =
 delayMilliseconds ms = CC.threadDelay (ms * 1000)
 
 
-parseDirection :: Char -> Maybe Turn
+parseDirection :: Char -> Maybe Action
 parseDirection c = case c of
-    's' -> Just LeftTurn
-    'd' -> Just RightTurn
+    's' -> Just Leftward
+    'd' -> Just Rightward
     _   -> Nothing
 
 
@@ -63,36 +63,28 @@ getCharImmediately = do
     getChar
 
 
-getDirections :: Producer (Maybe Turn) IO ()
+getDirections :: Producer (Maybe Action) IO ()
 getDirections = M.forever $ do
     c <- lift getCharImmediately
     yield $ parseDirection c
 
 
-ticktock :: Producer (Maybe Turn) IO ()
+ticktock :: Producer (Maybe Action) IO ()
 ticktock = M.forever $ do
     lift $ delayMilliseconds 250
-    yield Nothing
+    yield $ Just Forward
 
 
-applyUserAction :: State -> Maybe Turn -> State
-applyUserAction state event =
-    case event of
-        Just thatWay -> Lib.next $ state {snake = turn thatWay (snake state)}
-        Nothing      -> Lib.next state
-
-
-consumeUserActions :: State -> Consumer (Maybe Turn) IO ()
+consumeUserActions :: State -> Consumer (Maybe Action) IO ()
 consumeUserActions state = do
-    event <- await
-    let newState = applyUserAction state event
+    action <- await
+    let newState = Lib.next action state
     lift $ clearBoard newState
     lift $ putStr $ drawBoard $ createBoard newState
     lift $ hFlush stdout
-    let nextState = Lib.next newState
     case status state of
         GameOver -> lift $ putStrLn "\n\nGame Over!\n"
-        _        -> consumeUserActions nextState
+        _        -> consumeUserActions newState
 
 
 main :: IO ()
