@@ -56,8 +56,8 @@ shift :: Body a -> a -> Body a
 shift (Body i xs) x = Body i $ take i $ x : xs
 
 
-extend :: Body a -> a -> Body a
-extend (Body i xs) x = Body (i + 1) $ x : xs
+extend :: Body a -> Body a
+extend (Body i xs) = Body (i + 1) xs
 
 
 -- SNAKE

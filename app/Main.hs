@@ -10,18 +10,23 @@ import Pipes
 import Pipes.Concurrent
 import qualified Pipes.Prelude as P
 
-import Lib
-import Board
 import Snake
+import State
+import View
 
 
 -- INIT GAME
 
+startX = 10
+startY = 10
+startPosition = (startX, startY)
+
+
 initSnake :: Snake
 initSnake = Snake
     { direction  = East
-    , coordinate = (10, 10)
-    , body       = Body 3 []
+    , coordinate = startPosition
+    , body       = Body 2 []
     }
 
 
@@ -31,14 +36,14 @@ initState = State
     , rows   = 20
     , cols   = 50
     , status = KeepPlaying
-    , apple  = (3, 2)
+    , apple  = (startX + 1, startY)  -- Sneaky hack to put the Apple somewhere random
     }
 
 
 -- RENDERING
 
-clearBoard :: State -> IO ()
-clearBoard state =
+clearView :: State -> IO ()
+clearView state =
     M.replicateM_ (rows state - 1) (do
         Ansi.clearLine
         Ansi.cursorUp 1
@@ -71,16 +76,16 @@ getDirections = M.forever $ do
 
 ticktock :: Producer (Maybe Action) IO ()
 ticktock = M.forever $ do
-    lift $ delayMilliseconds 250
+    lift $ delayMilliseconds 150  -- Controls snake speed (ms / step)
     yield $ Just Forward
 
 
 consumeUserActions :: State -> Consumer (Maybe Action) IO ()
 consumeUserActions state = do
     action <- await
-    let newState = Lib.next action state
-    lift $ clearBoard newState
-    lift $ putStr $ drawBoard $ createBoard newState
+    newState <- lift $ State.next action state
+    lift $ clearView newState
+    lift $ putStr $ view newState
     lift $ hFlush stdout
     case status state of
         GameOver -> lift $ putStrLn "\n\nGame Over!\n"
@@ -89,7 +94,7 @@ consumeUserActions state = do
 
 main :: IO ()
 main = do
-    putStrLn $ drawBoard $ createBoard initState
+    putStrLn $ view initState
     (output, input) <- spawn unbounded
 
     forkIO $ do runEffect $ ticktock >-> toOutput output

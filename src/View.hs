@@ -1,16 +1,16 @@
-module Board
+module View
     ( Square(..)
     , Row
     , Board
     , createBoard
     , modifyAt
     , updateBoard
-    , drawBoard
+    , view
     ) where
 
 import qualified Data.List
 
-import Lib
+import State
 import Snake
 
 
@@ -67,7 +67,9 @@ createBoard state =
           appleCoord        = apple state
 
 
-drawBoard :: Board -> String
-drawBoard board =
+-- NOTE: Could use Show here?
+view :: State -> String
+view state =
     Data.List.intercalate "\n" $
-    map (map squareChar) board
+    map (map squareChar) $
+    createBoard state
