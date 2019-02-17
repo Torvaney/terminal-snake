@@ -1,0 +1,49 @@
+name:                terminal-snake
+version:             0.1.0.0
+github:              "torvaney/terminal-snake"
+license:             BSD3
+author:              "ben torvaney"
+maintainer:          "torvaney@protonmail.com"
+copyright:           "2019 ben torvaney"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/torvaney/terminal-snake#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+
+library:
+  source-dirs: src
+
+executables:
+  terminal-snake-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - terminal-snake
+    - ansi-terminal
+
+tests:
+  terminal-snake-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - terminal-snake
