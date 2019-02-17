@@ -1,22 +1,49 @@
 module Lib
-    ( State(..)
-    , iterateState
+    ( Status(..)
+    , State(..)
+    , next
     ) where
 
 
-data State
-    = East Int
-    | West Int
-    deriving (Eq, Ord)
+import Snake
 
 
-instance Show State where
-    show (East i) = replicate (i - 1) '#' ++ ">"
-    show (West i) = replicate (i - 1) '#' ++ "<"
+data Status
+    = KeepPlaying
+    | GameOver
 
 
-iterateState :: State -> State
-iterateState (East i) | i >= 59 = West 60
-                      | otherwise = East (i + 1)
-iterateState (West i) | i <= 2 = East 1
-                      | otherwise = West (i - 1)
+data State = State
+    { snake  :: Snake
+    , rows   :: Int
+    , cols   :: Int
+    , status :: Status
+    }
+
+
+checkLimits :: State -> State
+checkLimits state =
+    if (x >= c) || (y >= r)
+        then state {status = GameOver}
+        else state
+    where c      = cols state
+          r      = rows state
+          (x, y) = coordinate $ snake state
+
+
+checkOuroboros :: State -> State
+checkOuroboros state =
+    if coord `elem` coords
+        then state {status = GameOver}
+        else state
+    where coord         = coordinate $ snake state
+          Body _ coords = body $ snake state
+
+
+checkState :: State -> State
+checkState state =
+    checkOuroboros $ checkLimits state
+
+
+next :: State -> State
+next state = checkState $ state { snake = slither (snake state) }
