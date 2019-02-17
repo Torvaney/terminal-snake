@@ -94,7 +94,7 @@ consumeUserActions state = do
 
 main :: IO ()
 main = do
-    putStrLn $ view initState
+    putStr $ view initState
     (output, input) <- spawn unbounded
 
     forkIO $ do runEffect $ ticktock >-> toOutput output

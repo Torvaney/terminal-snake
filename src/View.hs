@@ -48,11 +48,22 @@ modifyAt xs i x =
     take i xs ++ [x] ++ drop (i+1) xs
 
 
+getAt :: [a] -> Int -> Maybe a
+getAt xs i
+    | i < 0          = Nothing
+    | length xs <= i = Nothing
+    | otherwise      = Just (xs !! i)
+
+
 updateBoard :: Square -> Coordinate -> Board -> Board
 updateBoard square (x, y) board =
-    modifyAt board y $
-    modifyAt row x square
-    where row = board !! y
+    case row of
+        Just r ->
+            modifyAt board y $
+            modifyAt r x square
+        Nothing ->
+            board
+    where row = getAt board y
 
 
 createBoard :: State -> Board
