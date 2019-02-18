@@ -20,4 +20,4 @@ $ stack run
 
 ## Extensions
 
-* Allow speed and board size as arguments to the programme
+* Allow speed and board size as arguments to the program.
