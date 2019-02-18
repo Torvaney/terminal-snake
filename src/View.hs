@@ -29,7 +29,7 @@ squareChar (SnakeHead South) = 'V'
 squareChar (SnakeHead West)  = '<'
 squareChar SnakeBody         = '#'
 squareChar Apple             = '@'
-squareChar Empty             = '•'
+squareChar Empty             = '-'
 
 
 type Row = [Square]

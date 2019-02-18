@@ -9,8 +9,7 @@ Gif made with [asciinema](https://github.com/asciinema/asciinema-player)
 ## Build & run
 
 ```
-$ stack build  # You only need to run this the 1st time
-$ stack exec terminal-snake-exe
+$ stack run
 ```
 
 ## Controls
